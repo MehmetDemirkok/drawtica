@@ -25,6 +25,9 @@ model User {
   updatedAt     DateTime  @updatedAt
   transactions  Transaction[]
   images        Image[]
+  emailVerified Boolean   @default(false)
+  resetToken    String?
+  resetTokenExpires DateTime?
 }
 
 model Image {

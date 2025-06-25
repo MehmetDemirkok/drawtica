@@ -24,13 +24,15 @@ export function verifyToken(token: string) {
   }
 }
 
-export async function createUser(email: string, password: string, name?: string) {
+export async function createUser(email: string, password: string, name?: string, resetToken?: string, resetTokenExpires?: Date) {
   const hashedPassword = await hashPassword(password);
   return prisma.user.create({
     data: {
       email,
       password: hashedPassword,
       name,
+      ...(resetToken && { resetToken }),
+      ...(resetTokenExpires && { resetTokenExpires }),
     },
   });
 }

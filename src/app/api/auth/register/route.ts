@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createUser, findUserByEmail, createToken } from '@/lib/auth';
+import { sendEmail } from '@/lib/sendEmail';
+import crypto from 'crypto';
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +22,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await createUser(email, password, name);
+    // Doğrulama tokenı oluştur
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 saat geçerli
+
+    // Kullanıcıyı token ile oluştur
+    const user = await createUser(email, password, name, verificationToken, verificationTokenExpires);
+
+    // Doğrulama linki
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
+
+    // E-posta gönder
+    await sendEmail({
+      to: email,
+      subject: 'Drawtica Hesap Doğrulama',
+      html: `<p>Hesabınızı doğrulamak için <a href="${verifyUrl}">buraya tıklayın</a>.</p>`
+    });
+
     const token = createToken(user.id);
 
     const { password: _, ...userWithoutPassword } = user;
