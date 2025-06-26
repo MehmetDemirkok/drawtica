@@ -1,83 +1,135 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { GoogleGenAI, Modality } from "@google/genai";
+import { PDFDocument, rgb } from "pdf-lib";
 
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export async function POST(req: NextRequest) {
-  if (process.env.USE_MOCK_OPENAI === "true") {
-    // Sahte açıklama ve örnek base64 görsel (küçük siyah-beyaz PNG)
-    const dummyDescription = "A simple cat sitting on a chair, black and white, clear outlines.";
-    // 1x1 px siyah PNG (base64)
-    const dummyBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ZcAAAAASUVORK5CYII=";
-    return NextResponse.json({ imageBase64: dummyBase64 });
-  }
-
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json(
-      { error: "OpenAI API anahtarı bulunamadı. Lütfen sistem yöneticisi ile iletişime geçin." },
-      { status: 500 }
-    );
-  }
-
-  const formData = await req.formData();
-  const file = formData.get("file");
-
-  if (!file || typeof file === "string") {
-    return NextResponse.json({ error: "Dosya bulunamadı" }, { status: 400 });
-  }
-
   try {
-    // Dosyayı base64'e çevir
-    const bytes = await (file as Blob).arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString('base64');
+    const { inputImage } = await req.json();
 
-    // GPT-4 Vision ile görüntüyü analiz et
-    const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Describe this image in detail, focusing on its main elements, composition, and style. Keep the description concise but comprehensive." },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`
-              }
-            }
-          ]
+    if (!inputImage) {
+      return NextResponse.json(
+        { error: "Missing inputImage" },
+        { status: 400 }
+      );
+    }
+
+    // En teknik, fotorealistik çizgi çıkarımı prompt'u
+    const transformationPrompt =
+      "IMPORTANT: Convert this image into a high-resolution, black and white line drawing by precisely tracing every visible edge, contour, and detail from the original photo. Do not simplify, stylize, cartoonize, or omit any features. Do not add or remove anything. The output must be a 1:1 technical pen tracing of the input, with all lines, shapes, and proportions exactly matching the original. No abstraction, no smoothing, no artistic interpretation, no color, no shading—just pure, sharp, clean lines that perfectly replicate the original image for technical or scientific documentation. The result should look like a technical pen plotter or scanner output. The output must be indistinguishable from a hand-traced technical drawing of the input photo.";
+
+    // Frontend'den gelen base64 image verisini temizle
+    const base64Data = inputImage.replace(
+      /^data:image\/[a-z]+;base64,/,
+      ""
+    );
+
+    const contents = [
+      { text: transformationPrompt },
+      {
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: base64Data,
+        },
+      },
+    ];
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-preview-image-generation",
+      contents: contents,
+      // @ts-ignore
+      generationConfig: {
+        temperature: 0.1,
+        topP: 1,
+      },
+      // @ts-ignore
+      config: {
+        responseModalities: [Modality.TEXT, Modality.IMAGE],
+      },
+    });
+
+    let generatedImageData = "";
+    let generatedMimeType = "image/png";
+    if (response.candidates && response.candidates[0]?.content?.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData?.data) {
+          generatedImageData = part.inlineData.data;
+          generatedMimeType = part.inlineData.mimeType || "image/png";
         }
-      ],
-      max_tokens: 300
-    });
-
-    const imageDescription = visionResponse.choices[0]?.message?.content;
-    if (!imageDescription || imageDescription.trim().length < 10) {
-      return NextResponse.json({ error: "Görüntü analizi başarısız oldu veya açıklama çok kısa." }, { status: 400 });
+      }
     }
 
-    // DALL-E 3 ile boyama sayfası oluştur
-    const imageResponse = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: `Black and white coloring page: ${imageDescription}`,
-      n: 1,
-      size: "1024x1024",
-      response_format: "b64_json"
-    });
-
-    const generatedImage = imageResponse.data?.[0]?.b64_json;
-    if (!generatedImage) {
-      throw new Error("Görüntü oluşturma başarısız oldu.");
+    if (!generatedImageData) {
+      console.error(
+        "Gemini API response (Image Transformation):",
+        JSON.stringify(response, null, 2)
+      );
+      return NextResponse.json(
+        { error: "Failed to generate image from response" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ imageBase64: generatedImage });
+    // PDF oluşturma
+    // A4 boyutu: 595 x 842 pt
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595, 842]);
+    page.drawRectangle({ x: 0, y: 0, width: 595, height: 842, color: rgb(1, 1, 1) });
+
+    // Görseli ekle
+    let image;
+    let imgDims;
+    if (generatedMimeType === "image/jpeg" || generatedMimeType === "image/jpg") {
+      image = await pdfDoc.embedJpg(generatedImageData);
+      imgDims = image.scale(1);
+    } else {
+      image = await pdfDoc.embedPng(generatedImageData);
+      imgDims = image.scale(1);
+    }
+
+    // Görseli A4'e ortala ve sığdır
+    const maxWidth = 595 - 40; // 20pt kenar boşluğu
+    const maxHeight = 842 - 40;
+    let scale = Math.min(maxWidth / imgDims.width, maxHeight / imgDims.height);
+    let imgWidth = imgDims.width * scale;
+    let imgHeight = imgDims.height * scale;
+    let x = (595 - imgWidth) / 2;
+    let y = (842 - imgHeight) / 2;
+
+    page.drawImage(image, {
+      x,
+      y,
+      width: imgWidth,
+      height: imgHeight,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
+
+    return NextResponse.json({
+      success: true,
+      pdfBase64,
+      imageBase64: `data:${generatedMimeType};base64,${generatedImageData}`,
+    });
   } catch (error: any) {
-    console.error("API Hatası:", error);
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        {
+          error: "Invalid request: The request body is not valid JSON.",
+          success: false,
+        },
+        { status: 400 }
+      );
+    }
+
+    console.error("Gemini API error:", error);
     return NextResponse.json(
-      { error: error.message || "Görüntü dönüştürme işlemi başarısız oldu." },
+      {
+        error: "Failed to transform image",
+        details: error.message,
+        success: false,
+      },
       { status: 500 }
     );
   }

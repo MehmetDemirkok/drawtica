@@ -36,8 +36,8 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
-  const [showImage, setShowImage] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
@@ -67,64 +67,74 @@ export default function Home() {
       return;
     }
 
-    setLoading(true);
-    setMessage("");
+    setPdfBase64(null);
     setImageBase64(null);
-    setShowImage(false);
+    setShowResultModal(false);
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const processRequest = async (base64Image: string | null) => {
+      setLoading(true);
+      try {
+        const payload = {
+          inputImage: base64Image,
+        };
 
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
 
-      console.log("API response:", data); // Debug için eklendi
+        const data = await res.json();
+        console.log("API response:", data);
 
-      if (res.ok && data.imageBase64) {
-        setMessage("Fotoğraf başarıyla işlendi!");
-        setImageBase64(data.imageBase64);
-        // Krediyi güncelle
-        if (user && typeof user.credits === "number") {
-          updateUser({
-            ...user,
-            credits: user.credits - 1,
-          });
+        if (res.ok && data.success && data.pdfBase64) {
+          setMessage("PDF başarıyla oluşturuldu!");
+          setPdfBase64(data.pdfBase64);
+          setImageBase64(data.imageBase64 || null);
+          if (user && typeof user.credits === "number") {
+            updateUser({
+              ...user,
+              credits: user.credits - 1,
+            });
+          }
+          setShowResultModal(true);
+        } else {
+          setMessage(data.error || "Bir hata oluştu. Lütfen tekrar deneyin.");
+          setPdfBase64(null);
+          setImageBase64(null);
+          setShowResultModal(false);
         }
-        setTimeout(() => setShowImage(true), 100);
-      } else {
-        setMessage(data.error || "Bir hata oluştu. Lütfen tekrar deneyin.");
-        setImageBase64(null);
-        setShowImage(false);
+      } catch (err) {
+        setMessage("Bir hata oluştu. Lütfen tekrar deneyin.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setMessage("Bir hata oluştu. Lütfen tekrar deneyin.");
-    } finally {
-      setLoading(false);
+    };
+
+    if (file) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        processRequest(reader.result as string);
+      };
+      reader.onerror = (error) => {
+        console.error("File reading error: ", error);
+        setMessage("Dosya okunurken bir hata oluştu.");
+        setLoading(false);
+      };
     }
   };
 
   const handleDownloadPDF = () => {
-    if (!imageBase64) return;
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4"
-    });
-    // A4: 210mm x 297mm
-    // Görseli ortala ve tam sayfaya sığdır
-    pdf.addImage(
-      `data:image/png;base64,${imageBase64}`,
-      "PNG",
-      0,
-      0,
-      210,
-      297
-    );
-    pdf.save("coloring-page.pdf");
+    if (!pdfBase64) return;
+    const link = document.createElement("a");
+    link.href = `data:application/pdf;base64,${pdfBase64}`;
+    link.download = "coloring-page.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleSelectPlan = async (plan: PricingPlan) => {
@@ -323,104 +333,62 @@ export default function Home() {
         <div className="text-center text-cyan-400 mt-8">Yükleniyor, lütfen bekleyin...</div>
       )}
 
-      {imageBase64 && (
+      {pdfBase64 && (
         <section className={`w-full max-w-7xl flex flex-col gap-8 items-center border-t 
                            border-indigo-900/50 py-16 px-4 ${
-                             showImage ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                             showResultModal ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                            }`}>
-          <h2 className="text-2xl font-bold gradient-text">Boyama Sayfan Hazır!</h2>
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 
-                          rounded-xl filter blur-3xl"></div>
-            <img
-              src={`data:image/png;base64,${imageBase64}`}
-              alt="Coloring Page"
-              className="relative max-w-md w-full border-2 border-indigo-900/50 rounded-xl 
-                       shadow-xl bg-[var(--card-background)]"
-            />
-          </div>
-          <div className="flex gap-4">
+          <h2 className="text-2xl font-bold gradient-text">PDF Hazır!</h2>
+          <div className="w-full flex flex-col items-center gap-4">
+            {imageBase64 && (
+              <img
+                src={imageBase64}
+                alt="Boyama Sayfası Önizleme"
+                className="w-full max-w-xs border-2 border-indigo-900/50 rounded-xl shadow bg-white"
+                style={{ background: 'white' }}
+              />
+            )}
             <button
               onClick={handleDownloadPDF}
-              className="bg-gradient-to-r from-orange-500 to-yellow-400 text-white px-6 py-3 
-                       rounded-lg font-semibold hover:from-orange-600 hover:to-yellow-500 
-                       transition-all duration-200 shadow-lg hover:shadow-orange-500/25 
-                       focus:ring-2 focus:ring-yellow-400"
+              className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:from-indigo-600 hover:to-cyan-600 transition-all duration-200 shadow-lg hover:shadow-indigo-500/25 focus:ring-2 focus:ring-cyan-400"
             >
-              PDF olarak indir
+              PDF'yi İndir
             </button>
+            <div className="text-green-400 font-semibold text-base mt-2">Çizimin başarıyla oluşturuldu! Dilediğin gibi indirip kullanabilirsin.</div>
           </div>
         </section>
       )}
 
-      {!loading && !imageBase64 && message === "Fotoğraf başarıyla işlendi!" && (
+      {!loading && !pdfBase64 && message === "Fotoğraf başarıyla işlendi!" && (
         <div className="text-center text-red-500 mt-8">Görsel oluşturulamadı. Lütfen tekrar deneyin.</div>
       )}
 
       {/* Sonuç Modalı */}
-      {showResultModal && imageBase64 && (
+      {showResultModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-          <div
-            className="relative flex flex-col items-center p-8 rounded-2xl shadow-2xl"
-            style={{
-              background: "linear-gradient(135deg, #232046 60%, #1a2a3a 100%)",
-              maxWidth: 520,
-              width: '95%',
-              boxShadow: '0 8px 40px 0 rgba(0,0,0,0.25)',
-              border: '2px solid #2e2e4d',
-              minHeight: 600,
-            }}
-          >
+          <div className="bg-[var(--card-background)] rounded-xl p-8 flex flex-col items-center gap-6 max-w-lg w-full">
+            <h2 className="text-2xl font-bold mb-2">PDF Hazır!</h2>
+            <p className="text-gray-300 text-center">A4 boyutunda, tam sayfa boyama sayfanız hazır. PDF dosyasını aşağıdan indirebilirsiniz.</p>
+            {imageBase64 && (
+              <img
+                src={imageBase64}
+                alt="Boyama Sayfası Önizleme"
+                className="w-full max-w-xs border-2 border-indigo-900/50 rounded-xl shadow bg-white"
+                style={{ background: 'white' }}
+              />
+            )}
+            <button
+              onClick={handleDownloadPDF}
+              className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-6 py-3 rounded-lg font-semibold w-full transition-all duration-200 shadow-lg hover:shadow-indigo-500/25 hover:from-indigo-600 hover:to-cyan-600 focus:ring-2 focus:ring-cyan-400"
+            >
+              PDF'yi İndir
+            </button>
             <button
               onClick={() => setShowResultModal(false)}
-              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/60 text-white text-2xl font-bold shadow-lg transition-all"
-              aria-label="Kapat"
-              style={{ zIndex: 2 }}
+              className="mt-2 text-gray-400 hover:text-white"
             >
-              ×
+              Kapat
             </button>
-            <h2 className="text-3xl font-extrabold gradient-text mb-4 text-center tracking-tight" style={{letterSpacing: 1}}>
-              Boyama Sayfan Hazır!
-            </h2>
-            <div style={{
-              width: '420px',
-              height: '595px',
-              maxWidth: '100%',
-              maxHeight: '60vh',
-              background: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '18px',
-              overflow: 'hidden',
-              marginBottom: '2rem',
-              boxShadow: '0 4px 32px 0 rgba(0,0,0,0.18)',
-              border: '1.5px solid #e0e0e0',
-              padding: 12,
-            }}>
-              <img
-                src={`data:image/png;base64,${imageBase64}`}
-                alt="Coloring Page Preview"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  background: 'white',
-                  display: 'block',
-                  boxShadow: '0 2px 16px 0 rgba(0,0,0,0.10)',
-                  borderRadius: 12,
-                }}
-              />
-            </div>
-            <div className="w-full flex flex-col items-center gap-4">
-              <button
-                onClick={handleDownloadPDF}
-                className="bg-gradient-to-r from-orange-500 to-yellow-400 text-white px-8 py-4 rounded-xl text-lg font-bold hover:from-orange-600 hover:to-yellow-500 transition-all duration-200 shadow-lg hover:shadow-orange-500/25 focus:ring-2 focus:ring-yellow-400"
-              >
-                PDF olarak indir
-              </button>
-              <div className="text-green-400 font-semibold text-base mt-2">Çizimin başarıyla oluşturuldu! Dilediğin gibi indirip kullanabilirsin.</div>
-            </div>
           </div>
         </div>
       )}
