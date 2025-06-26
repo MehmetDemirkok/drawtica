@@ -9,14 +9,6 @@ import type { PricingPlan } from "@/types/user";
 
 const MAX_FREE_CREDITS = 3;
 
-const exampleImages = [
-  "/next.svg",
-  "/vercel.svg",
-  "/globe.svg",
-  "/file.svg",
-  "/window.svg"
-];
-
 const features = [
   {
     icon: "🎨",
@@ -46,28 +38,12 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [showImage, setShowImage] = useState(false);
-  const [exampleIdx, setExampleIdx] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
 
   const { session, updateUser, resetCredits, signOut } = useAuth();
   const { user } = session;
-
-  // Örnek görsel slider
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setExampleIdx((i) => (i + 1) % exampleImages.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
-  // imageBase64 değiştiğinde modalı otomatik aç
-  useEffect(() => {
-    if (imageBase64) {
-      setShowResultModal(true);
-    }
-  }, [imageBase64]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -278,27 +254,6 @@ export default function Home() {
               </div>
             )}
           </form>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center">
-          <div className="relative w-[400px] h-[400px] animate-float">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 
-                          rounded-2xl filter blur-3xl"></div>
-            <div className="relative w-full h-full flex items-center justify-center 
-                          bg-[var(--card-background)] rounded-2xl shadow-xl 
-                          border-2 border-indigo-900/50 overflow-hidden">
-              <Image
-                src={exampleImages[exampleIdx]}
-                alt="Örnek Boyama Sayfası"
-                width={350}
-                height={350}
-                className="object-contain transition-all duration-700"
-                style={{ filter: "grayscale(1) contrast(1.2)", opacity: 0.9 }}
-              />
-              <span className="absolute bottom-4 right-4 bg-indigo-900/80 text-xs px-3 py-1 
-                             rounded-full text-white backdrop-blur-sm">Örnek</span>
-            </div>
-          </div>
         </div>
       </section>
 
