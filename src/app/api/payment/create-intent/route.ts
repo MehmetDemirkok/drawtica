@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     // Dinamik import ile iyzipay fonksiyonunu çağır
     const { createPaymentForm } = await import('../iyzicoServer');
-    const paymentForm = await createPaymentForm(amount, payload.userId, planId) as {
+    const paymentForm = await createPaymentForm() as {
       token: string;
       checkoutFormContent: string;
     };

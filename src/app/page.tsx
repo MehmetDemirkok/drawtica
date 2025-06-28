@@ -1,12 +1,10 @@
 "use client";
 import React, { useState, useEffect, Suspense } from "react";
-import { jsPDF } from "jspdf";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
 import PricingPlans from "@/components/PricingPlans";
-import type { PricingPlan } from "@/types/user";
 
 const MAX_FREE_CREDITS = 3;
 
@@ -127,7 +125,7 @@ function HomeContent() {
           setImageBase64(null);
           setShowResultModal(false);
         }
-      } catch (err) {
+      } catch {
         setMessage("Bir hata oluştu. Lütfen tekrar deneyin.");
       } finally {
         setLoading(false);
@@ -158,7 +156,7 @@ function HomeContent() {
     document.body.removeChild(link);
   };
 
-  const handleSelectPlan = async (plan: PricingPlan) => {
+  const handleSelectPlan = async () => {
     if (!user) {
       setShowAuthModal(true);
       return;
@@ -375,7 +373,7 @@ function HomeContent() {
               onClick={handleDownloadPDF}
               className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:from-indigo-600 hover:to-cyan-600 transition-all duration-200 shadow-lg hover:shadow-indigo-500/25 focus:ring-2 focus:ring-cyan-400"
             >
-              PDF'yi İndir
+              PDF&#39;yi İndir
             </button>
             <div className="text-green-400 font-semibold text-base mt-2">Çizimin başarıyla oluşturuldu! Dilediğin gibi indirip kullanabilirsin.</div>
           </div>
@@ -406,7 +404,7 @@ function HomeContent() {
               onClick={handleDownloadPDF}
               className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-6 py-3 rounded-lg font-semibold w-full transition-all duration-200 shadow-lg hover:shadow-indigo-500/25 hover:from-indigo-600 hover:to-cyan-600 focus:ring-2 focus:ring-cyan-400"
             >
-              PDF'yi İndir
+              PDF&#39;yi İndir
             </button>
             <button
               onClick={() => setShowResultModal(false)}
@@ -458,8 +456,8 @@ function HomeContent() {
               </button>
             </div>
             <PricingPlans
-              onSelectPlan={(plan) => {
-                handleSelectPlan(plan);
+              onSelectPlan={() => {
+                handleSelectPlan();
                 setShowPricingModal(false);
               }}
               currentPlan={user?.role === 'premium' ? 'premium-monthly' : 'free'}

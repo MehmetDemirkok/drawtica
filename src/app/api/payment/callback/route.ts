@@ -12,9 +12,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Dinamik import ile iyzipay fonksiyonunu çağır
-    const { handlePaymentCallback } = await import('../iyzicoServer');
-    
     // Başarılı ödeme sonrası kullanıcıyı yönlendir
     const redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/?payment=success`;
     

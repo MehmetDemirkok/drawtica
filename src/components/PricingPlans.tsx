@@ -90,7 +90,7 @@ export default function PricingPlans({ onSelectPlan, currentPlan, isModal }: Pri
         const json = await response.json();
         token = json.token;
         checkoutFormContent = json.checkoutFormContent;
-      } catch (e) {}
+      } catch {}
 
       if (!response.ok || token === 'dummy-token') {
         setShowPaymentInactive(true);
@@ -100,7 +100,7 @@ export default function PricingPlans({ onSelectPlan, currentPlan, isModal }: Pri
 
       window.location.href = `/checkout?checkoutFormContent=${encodeURIComponent(checkoutFormContent)}&plan=${plan.id}`;
       
-    } catch (error) {
+    } catch {
       setShowPaymentInactive(true);
       setIsProcessing(null);
     }

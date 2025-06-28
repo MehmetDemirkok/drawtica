@@ -33,8 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setSession({ user: null, isLoading: false });
         }
-      } catch (error) {
-        setSession({ user: null, isLoading: false, error: 'Session error' });
+      } catch {
+        setSession({ user: null, isLoading: false });
       }
     };
 
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         return { success: false, error: data.error || 'Login failed' };
       }
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Login failed' };
     }
   };
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         return { success: false, error: data.error || 'Registration failed' };
       }
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Registration failed' };
     }
   };

@@ -14,7 +14,6 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [forgotMessage, setForgotMessage] = useState('');
 
@@ -22,24 +21,17 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-    setForgotMessage('');
 
     try {
       if (mode === 'login') {
         const response = await signIn(email, password);
         if (response.success) {
           onClose();
-        } else {
-          setError(response.error || 'Giriş başarısız');
         }
       } else if (mode === 'register') {
         const response = await signUp(email, password, name);
         if (response.success) {
           onClose();
-        } else {
-          setError(response.error || 'Kayıt başarısız');
         }
       } else if (mode === 'forgot') {
         // Şifremi unuttum formu
@@ -51,12 +43,8 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
         const data = await res.json();
         if (res.ok) {
           setForgotMessage(data.message || 'Eğer bu e-posta sistemde varsa, sıfırlama linki gönderildi.');
-        } else {
-          setError(data.error || 'Bir hata oluştu.');
         }
       }
-    } catch (err) {
-      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }
@@ -136,19 +124,11 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
                   className="mt-2 text-sm text-indigo-400 hover:text-indigo-300 underline"
                   onClick={() => {
                     setMode('forgot');
-                    setError('');
-                    setForgotMessage('');
                   }}
                 >
                   Şifremi Unuttum?
                 </button>
               )}
-            </div>
-          )}
-
-          {error && (
-            <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded-lg">
-              {error}
             </div>
           )}
 

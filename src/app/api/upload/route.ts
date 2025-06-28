@@ -56,12 +56,11 @@ export async function POST(req: NextRequest) {
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-preview-image-generation",
       contents: contents,
-      // @ts-expect-error
+      // @ts-expect-error Gemini API types are not complete - generationConfig property exists but not typed
       generationConfig: {
         temperature: 0.1,
         topP: 1,
       },
-      // @ts-expect-error
       config: {
         responseModalities: [Modality.TEXT, Modality.IMAGE],
       },
@@ -109,11 +108,11 @@ export async function POST(req: NextRequest) {
     // Görseli A4'e ortala ve sığdır
     const maxWidth = 595 - 40; // 20pt kenar boşluğu
     const maxHeight = 842 - 40;
-    let scale = Math.min(maxWidth / imgDims.width, maxHeight / imgDims.height);
-    let imgWidth = imgDims.width * scale;
-    let imgHeight = imgDims.height * scale;
-    let x = (595 - imgWidth) / 2;
-    let y = (842 - imgHeight) / 2;
+    const scale = Math.min(maxWidth / imgDims.width, maxHeight / imgDims.height);
+    const imgWidth = imgDims.width * scale;
+    const imgHeight = imgDims.height * scale;
+    const x = (595 - imgWidth) / 2;
+    const y = (842 - imgHeight) / 2;
 
     page.drawImage(image, {
       x,
@@ -130,7 +129,7 @@ export async function POST(req: NextRequest) {
       pdfBase64,
       imageBase64: `data:${generatedMimeType};base64,${generatedImageData}`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         {
@@ -145,7 +144,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to transform image",
-        details: error.message,
+        details: error instanceof Error ? error.message : error,
         success: false,
       },
       { status: 500 }
