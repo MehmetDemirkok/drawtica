@@ -21,7 +21,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
       if (mode === 'login') {
         const response = await signIn(email, password);
