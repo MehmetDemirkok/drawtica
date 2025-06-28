@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { jsPDF } from "jspdf";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
 import PricingPlans from "@/components/PricingPlans";
@@ -41,13 +42,33 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
 
   const { session, updateUser, resetCredits, signOut } = useAuth();
   const { user } = session;
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      setShowPaymentSuccess(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      const allowedTypes = ["image/jpeg", "image/png"];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setMessage("Sadece JPEG veya PNG dosyaları yükleyebilirsiniz.");
+        return;
+      }
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        setMessage("Dosya boyutu 5MB'dan büyük olamaz.");
+        return;
+      }
+      setFile(selectedFile);
     }
   };
 
@@ -440,6 +461,41 @@ export default function Home() {
               currentPlan={user?.role === 'premium' ? 'premium-monthly' : 'free'}
               isModal
             />
+          </div>
+        </div>
+      )}
+
+      {/* Payment Success Modal */}
+      {showPaymentSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in">
+          <div className="bg-[var(--card-background)] rounded-xl shadow-xl p-8 max-w-md mx-4 border border-green-500/20">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Ödeme Başarılı!</h3>
+              <p className="text-gray-300 mb-6">
+                Premium üyeliğiniz aktifleştirildi. Artık daha fazla kredi ile boyama sayfaları oluşturabilirsiniz!
+              </p>
+              <button
+                onClick={() => setShowPaymentSuccess(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
+              >
+                Harika!
+              </button>
+            </div>
           </div>
         </div>
       )}

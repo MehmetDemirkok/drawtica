@@ -45,6 +45,7 @@ model Transaction {
   amount    Float
   credits   Int
   status    PaymentStatus
+  paymentId String?  // iyzico token'ı için
   createdAt DateTime @default(now())
 }
 

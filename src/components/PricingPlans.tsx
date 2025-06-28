@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PricingPlan } from '@/types/user';
+import { useAuth } from '@/context/AuthContext';
 
 const plans: PricingPlan[] = [
   {
@@ -52,8 +53,66 @@ interface PricingPlansProps {
 }
 
 export default function PricingPlans({ onSelectPlan, currentPlan, isModal }: PricingPlansProps) {
+  const { session } = useAuth();
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [showPaymentInactive, setShowPaymentInactive] = useState(false);
+
+  const handlePlanSelection = async (plan: PricingPlan) => {
+    if (plan.price === 0) {
+      onSelectPlan(plan);
+      return;
+    }
+
+    if (!session.user) {
+      onSelectPlan(plan);
+      return;
+    }
+
+    setIsProcessing(plan.id);
+    setShowPaymentInactive(false);
+
+    try {
+      const response = await fetch('/api/payment/create-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ 
+          amount: plan.price,
+          planId: plan.id 
+        }),
+      });
+
+      let token = '';
+      let checkoutFormContent = '';
+      try {
+        const json = await response.json();
+        token = json.token;
+        checkoutFormContent = json.checkoutFormContent;
+      } catch (e) {}
+
+      if (!response.ok || token === 'dummy-token') {
+        setShowPaymentInactive(true);
+        setIsProcessing(null);
+        return;
+      }
+
+      window.location.href = `/checkout?checkoutFormContent=${encodeURIComponent(checkoutFormContent)}&plan=${plan.id}`;
+      
+    } catch (error) {
+      setShowPaymentInactive(true);
+      setIsProcessing(null);
+    }
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto py-12 px-4">
+      {showPaymentInactive && (
+        <div className="mb-6 p-4 bg-yellow-900/40 border border-yellow-600/30 text-yellow-200 rounded-lg text-center">
+          <b>Ödeme sistemi yakında eklenecektir.</b> Şu anda ödeme işlemleri devre dışı.
+        </div>
+      )}
       <div className="text-center mb-16">
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
           <span className="gradient-text">Üyelik Planları</span>
@@ -116,7 +175,8 @@ export default function PricingPlans({ onSelectPlan, currentPlan, isModal }: Pri
             </ul>
 
             <button
-              onClick={() => onSelectPlan(plan)}
+              onClick={() => handlePlanSelection(plan)}
+              disabled={currentPlan === plan.id || isProcessing === plan.id}
               className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200
                         ${currentPlan === plan.id
                           ? 'bg-indigo-600 text-white cursor-default'
@@ -124,9 +184,12 @@ export default function PricingPlans({ onSelectPlan, currentPlan, isModal }: Pri
                             ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white hover:from-indigo-600 hover:to-cyan-600'
                             : 'bg-indigo-900/50 text-white hover:bg-indigo-900/70'
                         }`}
-              disabled={currentPlan === plan.id}
             >
-              {currentPlan === plan.id ? 'Mevcut Plan' : 'Planı Seç'}
+              {currentPlan === plan.id 
+                ? 'Mevcut Plan' 
+                : isProcessing === plan.id 
+                  ? 'İşleniyor...' 
+                  : 'Planı Seç'}
             </button>
           </div>
         ))}

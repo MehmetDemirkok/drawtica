@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createPaymentIntent } from '@/lib/payment';
 import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
@@ -21,23 +20,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const { amount } = await request.json();
-    if (!amount) {
+    const { amount, planId } = await request.json();
+    if (!amount || !planId) {
       return NextResponse.json(
-        { error: 'Tutar gerekli' },
+        { error: 'Tutar ve plan ID gerekli' },
         { status: 400 }
       );
     }
 
-    const paymentIntent = await createPaymentIntent(amount, payload.userId);
+    // Dinamik import ile iyzipay fonksiyonunu çağır
+    const { createPaymentForm } = await import('../iyzicoServer');
+    const paymentForm = await createPaymentForm(amount, payload.userId, planId) as {
+      token: string;
+      checkoutFormContent: string;
+    };
 
     return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
+      token: paymentForm.token,
+      checkoutFormContent: paymentForm.checkoutFormContent,
     });
   } catch (error) {
-    console.error('Payment intent error:', error);
+    console.error('Payment form error:', error);
     return NextResponse.json(
-      { error: 'Ödeme başlatılamadı' },
+      { error: 'Ödeme formu oluşturulamadı' },
       { status: 500 }
     );
   }

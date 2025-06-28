@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createUser, findUserByEmail, createToken } from '@/lib/auth';
+import { createUser, findUserByEmail, createToken, isPasswordStrong } from '@/lib/auth';
 import { sendEmail } from '@/lib/sendEmail';
 import crypto from 'crypto';
 
@@ -10,6 +10,13 @@ export async function POST(request: Request) {
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email ve şifre gerekli' },
+        { status: 400 }
+      );
+    }
+
+    if (!isPasswordStrong(password)) {
+      return NextResponse.json(
+        { error: 'Şifre en az 8 karakter, bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.' },
         { status: 400 }
       );
     }

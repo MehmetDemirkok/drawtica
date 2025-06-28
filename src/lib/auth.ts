@@ -64,4 +64,10 @@ export async function updateUserRole(userId: string, role: 'FREE' | 'PREMIUM', p
       premiumUntil,
     },
   });
+}
+
+// Şifre karmaşıklık kontrolü
+export function isPasswordStrong(password: string): boolean {
+  // En az 8 karakter, bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(password);
 } 

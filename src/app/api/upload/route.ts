@@ -15,6 +15,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Dosya tipi ve boyutu kontrolü
+    const matches = inputImage.match(/^data:(image\/jpeg|image\/png);base64,/);
+    if (!matches) {
+      return NextResponse.json(
+        { error: "Sadece JPEG veya PNG dosyaları kabul edilir." },
+        { status: 400 }
+      );
+    }
+    // Base64 boyutunu hesapla (yaklaşık)
+    const base64Length = inputImage.length - inputImage.indexOf(",") - 1;
+    const fileSizeInBytes = (base64Length * 3) / 4; // base64 -> byte
+    if (fileSizeInBytes > 5 * 1024 * 1024) { // 5MB
+      return NextResponse.json(
+        { error: "Dosya boyutu 5MB'dan büyük olamaz." },
+        { status: 400 }
+      );
+    }
+
     // En teknik, fotorealistik çizgi çıkarımı prompt'u
     const transformationPrompt =
       "IMPORTANT: Convert this image into a high-resolution, black and white line drawing by precisely tracing every visible edge, contour, and detail from the original photo. Do not simplify, stylize, cartoonize, or omit any features. Do not add or remove anything. The output must be a 1:1 technical pen tracing of the input, with all lines, shapes, and proportions exactly matching the original. No abstraction, no smoothing, no artistic interpretation, no color, no shading—just pure, sharp, clean lines that perfectly replicate the original image for technical or scientific documentation. The result should look like a technical pen plotter or scanner output. The output must be indistinguishable from a hand-traced technical drawing of the input photo.";
