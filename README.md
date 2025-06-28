@@ -1,11 +1,11 @@
 # Drawtica - AI Powered Coloring Page Generator
 
-Drawtica, fotoğraflarınızı yapay zeka ile boyama sayfalarına dönüştüren modern bir web uygulamasıdır. Stripe entegrasyonu ile güvenli ödeme sistemi içerir.
+Drawtica, fotoğraflarınızı yapay zeka ile boyama sayfalarına dönüştüren modern bir web uygulamasıdır. iyzico entegrasyonu ile güvenli ödeme sistemi içerir.
 
 ## 🚀 Özellikler
 
 - 🤖 **AI Destekli Dönüştürme**: Google Gemini API ile fotoğrafları boyama sayfalarına dönüştürme
-- 💳 **Güvenli Ödeme**: Stripe entegrasyonu ile premium üyelik sistemi
+- 💳 **Güvenli Ödeme**: iyzico entegrasyonu ile premium üyelik sistemi
 - 🎨 **Yüksek Kalite**: PNG ve PDF formatlarında indirme
 - 🔒 **Güvenli**: Kullanıcı verileri güvenli şekilde işlenir
 - 📱 **Responsive**: Tüm cihazlarda mükemmel deneyim
@@ -18,7 +18,7 @@ Drawtica, fotoğraflarınızı yapay zeka ile boyama sayfalarına dönüştüren
 - **Payment**: iyzico (Türkiye'de en popüler ödeme sistemi)
 - **AI**: Google Gemini API
 - **Authentication**: JWT
-- **Email**: Nodemailer
+- **Email**: Resend
 
 ## 📋 Kurulum
 
@@ -54,11 +54,9 @@ JWT_SECRET=your_jwt_secret_here
 # Google Gemini API
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Email Configuration
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_password_here
+# Email Configuration (Resend)
+RESEND_API_KEY=your_resend_api_key_here
+RESEND_FROM_EMAIL=noreply@yourdomain.com
 
 # App Configuration
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -100,10 +98,11 @@ npm run dev
 ### Ödeme Akışı
 
 1. Kullanıcı plan seçer
-2. iyzico checkout form oluşturulur
-3. Güvenli ödeme sayfasında kart bilgileri girilir
-4. 3D Secure ile doğrulama
-5. Callback ile kullanıcı kredileri güncellenir
+2. iyzico checkout formu backend'de oluşturulur ve frontend'e HTML olarak döner
+3. Kullanıcıya güvenli iyzico ödeme formu gösterilir
+4. Kullanıcı kart bilgilerini girer ve 3D Secure ile doğrulama yapılır
+5. Ödeme başarılı olursa iyzico, backend'deki `/api/payment/callback` endpointine bildirim gönderir
+6. Callback endpointi, kullanıcının kredi bakiyesini günceller ve ödemeyi tamamlar
 
 ### iyzico Avantajları
 
@@ -123,9 +122,9 @@ npm run dev
 - `POST /api/auth/reset-password` - Şifre sıfırlama
 - `POST /api/auth/verify-email` - Email doğrulama
 
-### Payment
-- `POST /api/payment/create-intent` - Ödeme intent oluşturma
-- `POST /api/payment/webhook` - Stripe webhook handler
+### Payment (iyzico)
+- `POST /api/payment/create-intent` - iyzico ödeme intent oluşturma (checkout formu döner)
+- `POST /api/payment/callback` - iyzico callback handler (ödeme sonrası kredi güncelleme)
 
 ### Upload
 - `POST /api/upload` - Fotoğraf yükleme ve dönüştürme
@@ -136,7 +135,7 @@ npm run dev
 
 1. Vercel'e projeyi deploy edin
 2. Environment variables'ları Vercel dashboard'da ayarlayın
-3. Stripe webhook URL'ini güncelleyin
+3. iyzico callback URL'ini güncelleyin
 4. Database connection string'ini production'a göre ayarlayın
 
 ### Diğer Platformlar
@@ -165,6 +164,6 @@ Bu proje MIT lisansı altında lisanslanmıştır.
 ## 🙏 Teşekkürler
 
 - [Next.js](https://nextjs.org/) - React framework
-- [Stripe](https://stripe.com/) - Payment processing
+- [iyzico](https://iyzico.com/) - Payment processing
 - [Google Gemini](https://ai.google.dev/) - AI API
 - [Prisma](https://prisma.io/) - Database ORM

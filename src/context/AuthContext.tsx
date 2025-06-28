@@ -43,20 +43,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string): Promise<AuthResponse> => {
     try {
-      // TODO: Replace with actual API call
-      const mockUser: User = {
-        id: '1',
-        email,
-        role: 'free',
-        credits: 3,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      localStorage.setItem('drawtica_user', JSON.stringify(mockUser));
-      setSession({ user: mockUser, isLoading: false });
-      
-      return { success: true, user: mockUser };
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        localStorage.setItem('drawtica_user', JSON.stringify(data.user));
+        setSession({ user: data.user, isLoading: false });
+        return { success: true, user: data.user };
+      } else {
+        return { success: false, error: data.error || 'Login failed' };
+      }
     } catch (error) {
       return { success: false, error: 'Login failed' };
     }
@@ -64,21 +63,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string): Promise<AuthResponse> => {
     try {
-      // TODO: Replace with actual API call
-      const mockUser: User = {
-        id: '1',
-        email,
-        name,
-        role: 'free',
-        credits: 3,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      localStorage.setItem('drawtica_user', JSON.stringify(mockUser));
-      setSession({ user: mockUser, isLoading: false });
-      
-      return { success: true, user: mockUser };
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        localStorage.setItem('drawtica_user', JSON.stringify(data.user));
+        setSession({ user: data.user, isLoading: false });
+        return { success: true, user: data.user };
+      } else {
+        return { success: false, error: data.error || 'Registration failed' };
+      }
     } catch (error) {
       return { success: false, error: 'Registration failed' };
     }
