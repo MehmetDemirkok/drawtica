@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend API key'i yoksa mock response döndür
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function sendEmail({
   to,
@@ -12,6 +13,12 @@ export async function sendEmail({
   html: string;
 }) {
   try {
+    // Resend API key'i yoksa mock response döndür
+    if (!resend) {
+      console.log('Resend API key not configured. Mock email sent:', { to, subject });
+      return { id: 'mock-email-id' };
+    }
+
     const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'noreply@drawtica.com',
       to,
