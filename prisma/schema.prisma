@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-   generator client {
-     provider = "prisma-client-js"
-   }
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
@@ -14,39 +8,39 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  password      String
-  role          UserRole  @default(FREE)
-  credits       Int       @default(3)
-  premiumUntil  DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  transactions  Transaction[]
-  images        Image[]
-  emailVerified Boolean   @default(false)
-  resetToken    String?
+  id                String        @id @default(cuid())
+  email             String        @unique
+  name              String?
+  password          String
+  role              UserRole      @default(FREE)
+  credits           Int           @default(3)
+  premiumUntil      DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  emailVerified     Boolean       @default(false)
+  resetToken        String?
   resetTokenExpires DateTime?
+  images            Image[]
+  transactions      Transaction[]
 }
 
 model Image {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   url       String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Transaction {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   amount    Float
   credits   Int
   status    PaymentStatus
-  paymentId String?  // iyzico token'ı için
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
+  paymentId String?
+  user      User          @relation(fields: [userId], references: [id])
 }
 
 enum UserRole {

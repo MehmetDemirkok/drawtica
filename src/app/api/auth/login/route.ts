@@ -32,7 +32,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await findUserByEmail(email);
+    // Database bağlantısını kontrol et
+    let user;
+    try {
+      user = await findUserByEmail(email);
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      return NextResponse.json(
+        { error: 'Database bağlantı hatası. Lütfen daha sonra tekrar deneyin.' },
+        { status: 500 }
+      );
+    }
+
     if (!user) {
       return NextResponse.json(
         { error: 'Email veya şifre hatalı' },
@@ -57,7 +68,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Giriş işlemi başarısız' },
+      { error: 'Giriş işlemi başarısız. Lütfen daha sonra tekrar deneyin.' },
       { status: 500 }
     );
   }

@@ -21,11 +21,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) {
+    // Database bağlantısını kontrol et
+    try {
+      const existingUser = await findUserByEmail(email);
+      if (existingUser) {
+        return NextResponse.json(
+          { error: 'Bu email adresi zaten kullanımda' },
+          { status: 400 }
+        );
+      }
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
       return NextResponse.json(
-        { error: 'Bu email adresi zaten kullanımda' },
-        { status: 400 }
+        { error: 'Database bağlantı hatası. Lütfen daha sonra tekrar deneyin.' },
+        { status: 500 }
       );
     }
 
@@ -34,10 +43,24 @@ export async function POST(request: Request) {
     const verificationTokenExpires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 saat geçerli
 
     // Kullanıcıyı token ile oluştur
-    const user = await createUser(email, password, name, verificationToken, verificationTokenExpires);
+    let user;
+    try {
+      user = await createUser(email, password, name, verificationToken, verificationTokenExpires);
+    } catch (createError) {
+      console.error('User creation error:', createError);
+      return NextResponse.json(
+        { error: 'Kullanıcı oluşturulamadı. Lütfen daha sonra tekrar deneyin.' },
+        { status: 500 }
+      );
+    }
 
-    // E-posta doğrulama gönder
-    await sendVerificationEmail(email, verificationToken);
+    // E-posta doğrulama gönder (hata olsa bile kullanıcı oluşturuldu)
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // Email gönderilemese bile kullanıcı oluşturuldu, sadece log yaz
+    }
 
     const token = createToken(user.id);
 
@@ -49,7 +72,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { error: 'Kayıt işlemi başarısız' },
+      { error: 'Kayıt işlemi başarısız. Lütfen daha sonra tekrar deneyin.' },
       { status: 500 }
     );
   }
