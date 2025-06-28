@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,7 +19,6 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
   const [forgotMessage, setForgotMessage] = useState('');
 
   const { signIn, signUp } = useAuth();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

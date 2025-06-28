@@ -56,12 +56,12 @@ export async function POST(req: NextRequest) {
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-preview-image-generation",
       contents: contents,
-      // @ts-ignore
+      // @ts-expect-error
       generationConfig: {
         temperature: 0.1,
         topP: 1,
       },
-      // @ts-ignore
+      // @ts-expect-error
       config: {
         responseModalities: [Modality.TEXT, Modality.IMAGE],
       },

@@ -41,10 +41,8 @@ export async function POST(request: Request) {
 
     const token = createToken(user.id);
 
-    const { password: _, ...userWithoutPassword } = user;
-
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: user,
       token,
       message: 'Kayıt başarılı! E-posta adresinizi kontrol edin.'
     });

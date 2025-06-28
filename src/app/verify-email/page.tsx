@@ -1,10 +1,9 @@
 "use client";
 import React, { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const token = searchParams.get("token") || "";
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");

@@ -362,10 +362,12 @@ function HomeContent() {
           <h2 className="text-2xl font-bold gradient-text">PDF Hazır!</h2>
           <div className="w-full flex flex-col items-center gap-4">
             {imageBase64 && (
-              <img
+              <Image
                 src={imageBase64}
                 alt="Boyama Sayfası Önizleme"
                 className="w-full max-w-xs border-2 border-indigo-900/50 rounded-xl shadow bg-white"
+                width={100}
+                height={100}
                 style={{ background: 'white' }}
               />
             )}
@@ -391,10 +393,12 @@ function HomeContent() {
             <h2 className="text-2xl font-bold mb-2">PDF Hazır!</h2>
             <p className="text-gray-300 text-center">A4 boyutunda, tam sayfa boyama sayfanız hazır. PDF dosyasını aşağıdan indirebilirsiniz.</p>
             {imageBase64 && (
-              <img
+              <Image
                 src={imageBase64}
                 alt="Boyama Sayfası Önizleme"
                 className="w-full max-w-xs border-2 border-indigo-900/50 rounded-xl shadow bg-white"
+                width={100}
+                height={100}
                 style={{ background: 'white' }}
               />
             )}
