@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createUser, findUserByEmail, createToken, isPasswordStrong } from '@/lib/auth';
-import { sendEmail } from '@/lib/sendEmail';
+import { sendVerificationEmail } from '@/lib/sendEmail';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
@@ -36,16 +36,8 @@ export async function POST(request: Request) {
     // Kullanıcıyı token ile oluştur
     const user = await createUser(email, password, name, verificationToken, verificationTokenExpires);
 
-    // Doğrulama linki
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
-
-    // E-posta gönder
-    await sendEmail({
-      to: email,
-      subject: 'Drawtica Hesap Doğrulama',
-      html: `<p>Hesabınızı doğrulamak için <a href="${verifyUrl}">buraya tıklayın</a>.</p>`
-    });
+    // E-posta doğrulama gönder
+    await sendVerificationEmail(email, verificationToken);
 
     const token = createToken(user.id);
 
@@ -54,6 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       user: userWithoutPassword,
       token,
+      message: 'Kayıt başarılı! E-posta adresinizi kontrol edin.'
     });
   } catch (error) {
     console.error('Registration error:', error);

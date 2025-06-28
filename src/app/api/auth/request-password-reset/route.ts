@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-import { sendEmail } from '@/lib/sendEmail';
+import { sendPasswordResetEmail } from '@/lib/sendEmail';
 import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -23,14 +23,8 @@ export async function POST(req: NextRequest) {
     data: { resetToken, resetTokenExpires },
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
-
-  await sendEmail({
-    to: email,
-    subject: 'Drawtica Şifre Sıfırlama',
-    html: `<p>Şifrenizi sıfırlamak için <a href="${resetUrl}">buraya tıklayın</a>. Bu link 1 saat geçerlidir.</p>`
-  });
+  // Şifre sıfırlama e-postası gönder
+  await sendPasswordResetEmail(email, resetToken);
 
   return NextResponse.json({ message: 'Eğer bu e-posta sistemde varsa, sıfırlama linki gönderildi.' });
 } 
