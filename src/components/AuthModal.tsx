@@ -15,6 +15,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
 
   const { signIn, signUp } = useAuth();
@@ -22,16 +23,23 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    setForgotMessage('');
+    
     try {
       if (mode === 'login') {
         const response = await signIn(email, password);
         if (response.success) {
           onClose();
+        } else {
+          setError(response.error || 'Giriş başarısız');
         }
       } else if (mode === 'register') {
         const response = await signUp(email, password, name);
         if (response.success) {
           onClose();
+        } else {
+          setError(response.error || 'Kayıt başarısız');
         }
       } else if (mode === 'forgot') {
         // Şifremi unuttum formu
@@ -43,11 +51,21 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
         const data = await res.json();
         if (res.ok) {
           setForgotMessage(data.message || 'Eğer bu e-posta sistemde varsa, sıfırlama linki gönderildi.');
+        } else {
+          setError(data.error || 'Şifre sıfırlama başarısız');
         }
       }
+    } catch (err) {
+      setError('Bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleModeChange = (newMode: 'login' | 'register' | 'forgot') => {
+    setMode(newMode);
+    setError('');
+    setForgotMessage('');
   };
 
   if (!isOpen) return null;
@@ -68,6 +86,12 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
             {mode === 'forgot' && 'E-posta adresinizi girin, sıfırlama linki gönderelim.'}
           </p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-500/50 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
@@ -122,9 +146,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
                 <button
                   type="button"
                   className="mt-2 text-sm text-indigo-400 hover:text-indigo-300 underline"
-                  onClick={() => {
-                    setMode('forgot');
-                  }}
+                  onClick={() => handleModeChange('forgot')}
                 >
                   Şifremi Unuttum?
                 </button>
@@ -164,7 +186,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
         <div className="mt-6 text-center">
           {mode === 'login' && (
             <button
-              onClick={() => setMode('register')}
+              onClick={() => handleModeChange('register')}
               className="text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               Hesabınız yok mu? Kayıt olun
@@ -172,7 +194,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
           )}
           {mode === 'register' && (
             <button
-              onClick={() => setMode('login')}
+              onClick={() => handleModeChange('login')}
               className="text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               Zaten hesabınız var mı? Giriş yapın
@@ -180,7 +202,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
           )}
           {mode === 'forgot' && (
             <button
-              onClick={() => setMode('login')}
+              onClick={() => handleModeChange('login')}
               className="text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               Giriş ekranına dön

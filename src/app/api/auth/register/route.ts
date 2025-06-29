@@ -4,20 +4,32 @@ import { sendVerificationEmail } from '@/lib/sendEmail';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
+  // CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 200, headers });
+  }
+
   try {
     const { email, password, name } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email ve şifre gerekli' },
-        { status: 400 }
+        { status: 400, headers }
       );
     }
 
     if (!isPasswordStrong(password)) {
       return NextResponse.json(
         { error: 'Şifre en az 8 karakter, bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.' },
-        { status: 400 }
+        { status: 400, headers }
       );
     }
 
@@ -27,14 +39,14 @@ export async function POST(request: Request) {
       if (existingUser) {
         return NextResponse.json(
           { error: 'Bu email adresi zaten kullanımda' },
-          { status: 400 }
+          { status: 400, headers }
         );
       }
     } catch (dbError) {
       console.error('Database connection error:', dbError);
       return NextResponse.json(
         { error: 'Database bağlantı hatası. Lütfen daha sonra tekrar deneyin.' },
-        { status: 500 }
+        { status: 500, headers }
       );
     }
 
@@ -50,7 +62,7 @@ export async function POST(request: Request) {
       console.error('User creation error:', createError);
       return NextResponse.json(
         { error: 'Kullanıcı oluşturulamadı. Lütfen daha sonra tekrar deneyin.' },
-        { status: 500 }
+        { status: 500, headers }
       );
     }
 
@@ -68,12 +80,12 @@ export async function POST(request: Request) {
       user: user,
       token,
       message: 'Kayıt başarılı! E-posta adresinizi kontrol edin.'
-    });
+    }, { headers });
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
       { error: 'Kayıt işlemi başarısız. Lütfen daha sonra tekrar deneyin.' },
-      { status: 500 }
+      { status: 500, headers }
     );
   }
 } 

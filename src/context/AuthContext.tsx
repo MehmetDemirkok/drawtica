@@ -48,16 +48,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      
       const data = await res.json();
+      
       if (res.ok && data.user) {
         localStorage.setItem('drawtica_user', JSON.stringify(data.user));
         setSession({ user: data.user, isLoading: false });
         return { success: true, user: data.user };
       } else {
-        return { success: false, error: data.error || 'Login failed' };
+        return { success: false, error: data.error || 'Giriş başarısız' };
       }
-    } catch {
-      return { success: false, error: 'Login failed' };
+    } catch (error) {
+      console.error('Sign in error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return { success: false, error: 'Ağ bağlantısı hatası. Lütfen internet bağlantınızı kontrol edin.' };
+      }
+      return { success: false, error: 'Giriş işlemi başarısız. Lütfen daha sonra tekrar deneyin.' };
     }
   };
 
@@ -68,16 +74,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name })
       });
+      
       const data = await res.json();
+      
       if (res.ok && data.user) {
         localStorage.setItem('drawtica_user', JSON.stringify(data.user));
         setSession({ user: data.user, isLoading: false });
         return { success: true, user: data.user };
       } else {
-        return { success: false, error: data.error || 'Registration failed' };
+        return { success: false, error: data.error || 'Kayıt başarısız' };
       }
-    } catch {
-      return { success: false, error: 'Registration failed' };
+    } catch (error) {
+      console.error('Sign up error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return { success: false, error: 'Ağ bağlantısı hatası. Lütfen internet bağlantınızı kontrol edin.' };
+      }
+      return { success: false, error: 'Kayıt işlemi başarısız. Lütfen daha sonra tekrar deneyin.' };
     }
   };
 
