@@ -224,14 +224,6 @@ function HomeContent() {
                 >
                   Giriş Yap
                 </button>
-                {process.env.NODE_ENV === 'development' && (
-                  <button
-                    onClick={resetFreeCredits}
-                    className="bg-yellow-900/60 text-yellow-300 px-3 py-2 rounded-lg hover:bg-yellow-900/80 text-sm"
-                  >
-                    Sıfırla
-                  </button>
-                )}
               </div>
             )}
           </nav>
