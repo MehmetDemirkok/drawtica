@@ -14,24 +14,82 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Drawtica - Fotoğrafını Boyama Sayfasına Dönüştür!",
-  description: "Yapay zeka ile fotoğrafını kolayca boyama sayfasına çevir ve PDF olarak indir.",
+  title: "Drawtica - AI ile Fotoğrafını Boyama Sayfasına Dönüştür | Ücretsiz",
+  description: "Yapay zeka teknolojisi ile fotoğraflarınızı saniyeler içinde boyama sayfasına çevirin. Ücretsiz deneme, PDF indirme, çocuklar için eğitici aktivite. En iyi AI boyama sayfası oluşturucu.",
+  keywords: [
+    "boyama sayfası",
+    "AI boyama sayfası",
+    "fotoğraf boyama sayfası",
+    "çocuk boyama sayfası",
+    "PDF boyama sayfası",
+    "yapay zeka boyama",
+    "ücretsiz boyama sayfası",
+    "eğitici aktivite",
+    "çocuk aktivitesi",
+    "AI görsel işleme"
+  ],
+  authors: [{ name: "Drawtica Team" }],
+  creator: "Drawtica",
+  publisher: "Drawtica",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://drawtica.com'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
-    title: "Drawtica - Fotoğrafını Boyama Sayfasına Dönüştür!",
-    description: "Yapay zeka ile fotoğrafını kolayca boyama sayfasına çevir ve PDF olarak indir.",
+    title: "Drawtica - AI ile Fotoğrafını Boyama Sayfasına Dönüştür",
+    description: "Yapay zeka teknolojisi ile fotoğraflarınızı saniyeler içinde boyama sayfasına çevirin. Ücretsiz deneme, PDF indirme.",
     url: "https://drawtica.com/",
     siteName: "Drawtica",
     locale: "tr_TR",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Drawtica - AI Boyama Sayfası Oluşturucu",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Drawtica - Fotoğrafını Boyama Sayfasına Dönüştür!",
-    description: "Yapay zeka ile fotoğrafını kolayca boyama sayfasına çevir ve PDF olarak indir.",
+    title: "Drawtica - AI ile Fotoğrafını Boyama Sayfasına Dönüştür",
+    description: "Yapay zeka teknolojisi ile fotoğraflarınızı saniyeler içinde boyama sayfasına çevirin.",
+    images: ["/og-image.jpg"],
+    creator: "@drawtica",
+    site: "@drawtica",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: "VHtyX1kl8bZX5K0L-7BnEI0fZ0ZuuqVuEfN3eHoFWRc",
+    yandex: "your-yandex-verification-code",
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -44,6 +102,32 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="canonical" href="https://drawtica.com/" />
+        
+        {/* Schema.org structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Drawtica",
+              "description": "Yapay zeka ile fotoğraflarınızı boyama sayfasına dönüştürün",
+              "url": "https://drawtica.com",
+              "applicationCategory": "EntertainmentApplication",
+              "operatingSystem": "Web Browser",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "TRY"
+              },
+              "creator": {
+                "@type": "Organization",
+                "name": "Drawtica"
+              }
+            })
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 min-h-screen flex flex-col`}
