@@ -52,6 +52,7 @@ model Transaction {
 enum UserRole {
   FREE
   PREMIUM
+  ADMIN
 }
 
 enum PaymentStatus {

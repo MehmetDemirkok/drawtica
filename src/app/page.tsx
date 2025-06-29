@@ -216,7 +216,7 @@ function HomeContent() {
                 >
                   Çıkış Yap
                 </button>
-                {process.env.NEXT_PUBLIC_USE_MOCK_OPENAI === "true" && (
+                {user?.role === "ADMIN" && (
                   <button
                     onClick={resetCredits}
                     className="bg-green-900/60 text-green-300 px-4 py-2 rounded-lg ml-2 hover:bg-green-900/80"
@@ -450,7 +450,7 @@ function HomeContent() {
         <section id="pricing">
           <PricingPlans
             onSelectPlan={handleSelectPlan}
-            currentPlan={user?.role === 'premium' ? 'premium-monthly' : 'free'}
+            currentPlan={user?.role === 'PREMIUM' ? 'premium-monthly' : 'free'}
           />
         </section>
 
@@ -490,7 +490,7 @@ function HomeContent() {
                   handleSelectPlan();
                   setShowPricingModal(false);
                 }}
-                currentPlan={user?.role === 'premium' ? 'premium-monthly' : 'free'}
+                currentPlan={user?.role === 'PREMIUM' ? 'premium-monthly' : 'free'}
                 isModal
               />
             </div>

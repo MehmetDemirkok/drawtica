@@ -2,7 +2,12 @@ import { Resend } from 'resend';
 
 // Resend API key'i yoksa mock response döndür
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@drawtica.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
+/**
+ * Genel e-posta gönderici
+ */
 export async function sendEmail({
   to,
   subject,
@@ -20,7 +25,7 @@ export async function sendEmail({
     }
 
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@drawtica.com',
+      from: FROM_EMAIL,
       to,
       subject,
       html,
@@ -38,8 +43,11 @@ export async function sendEmail({
   }
 }
 
+/**
+ * E-posta doğrulama maili gönderir
+ */
 export async function sendVerificationEmail(to: string, token: string) {
-  const verifyUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/verify-email?token=${token}`;
+  const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
   
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -82,8 +90,11 @@ export async function sendVerificationEmail(to: string, token: string) {
   });
 }
 
+/**
+ * Şifre sıfırlama maili gönderir
+ */
 export async function sendPasswordResetEmail(to: string, token: string) {
-  const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
+  const resetUrl = `${BASE_URL}/reset-password?token=${token}`;
   
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
