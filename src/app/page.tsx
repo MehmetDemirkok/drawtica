@@ -163,11 +163,6 @@ function HomeContent() {
     alert("Ödeme sistemi entegrasyonu yakında!");
   };
 
-  const resetFreeCredits = () => {
-    localStorage.removeItem('freeCreditsUsed');
-    setMessage("Ücretsiz haklar sıfırlandı!");
-  };
-
   return (
     <>
       <div className="min-h-screen w-full bg-[var(--background)] text-white flex flex-col items-center px-2">
