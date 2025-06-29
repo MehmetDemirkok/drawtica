@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
 import PricingPlans from "@/components/PricingPlans";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ErrorMessage, { SuccessMessage } from "@/components/ErrorMessage";
+import FileUpload from "@/components/FileUpload";
 
 const MAX_FREE_CREDITS = 3;
 
@@ -54,24 +57,7 @@ function HomeContent() {
     }
   }, [searchParams]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      const allowedTypes = ["image/jpeg", "image/png"];
-      if (!allowedTypes.includes(selectedFile.type)) {
-        setMessage("Sadece JPEG veya PNG dosyaları yükleyebilirsiniz.");
-        return;
-      }
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        setMessage("Dosya boyutu 5MB'dan büyük olamaz.");
-        return;
-      }
-      setFile(selectedFile);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!file) return;
 
     // Kullanıcı giriş yapmamışsa ve ücretsiz hakları bittiyse
@@ -186,64 +172,64 @@ function HomeContent() {
     <>
       <div className="min-h-screen w-full bg-[var(--background)] text-white flex flex-col items-center px-2">
         {/* Header */}
-        <header className="w-full max-w-7xl flex items-center justify-between py-6 px-4">
+        <header className="w-full max-w-7xl flex flex-col sm:flex-row items-center justify-between py-6 px-4 gap-4">
           <div className="text-2xl font-bold gradient-text">Drawtica</div>
-          <nav className="flex items-center gap-6">
-            <a href="#features" className="text-gray-300 hover:text-white transition-colors">
+          <nav className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center">
+            <a href="#features" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base">
               Özellikler
             </a>
-            <a href="#pricing" className="text-gray-300 hover:text-white transition-colors">
+            <a href="#pricing" className="text-gray-300 hover:text-white transition-colors text-sm sm:text-base">
               Fiyatlandırma
             </a>
             {user ? (
-              <div className="flex items-center gap-4">
-                <span className="text-gray-300">
+              <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
+                <span className="text-gray-300 text-sm sm:text-base">
                   {typeof user.credits === "number" ? user.credits : 0} kredi
                 </span>
-                <span className="text-gray-300 font-semibold">
+                <span className="text-gray-300 font-semibold text-sm sm:text-base hidden sm:block">
                   {user.name || user.email}
                 </span>
                 <button
                   onClick={() => setShowPricingModal(true)}
-                  className="bg-indigo-900/50 text-white px-4 py-2 rounded-lg hover:bg-indigo-900/70 
-                           transition-all duration-200"
+                  className="bg-indigo-900/50 text-white px-3 py-2 rounded-lg hover:bg-indigo-900/70 
+                           transition-all duration-200 text-sm"
                 >
                   Kredi Al
                 </button>
                 <button
                   onClick={signOut}
-                  className="bg-red-900/60 text-red-300 px-4 py-2 rounded-lg ml-2 hover:bg-red-900/80"
+                  className="bg-red-900/60 text-red-300 px-3 py-2 rounded-lg hover:bg-red-900/80 text-sm"
                 >
-                  Çıkış Yap
+                  Çıkış
                 </button>
                 {user?.role === "ADMIN" && (
                   <button
                     onClick={resetCredits}
-                    className="bg-green-900/60 text-green-300 px-4 py-2 rounded-lg ml-2 hover:bg-green-900/80"
+                    className="bg-green-900/60 text-green-300 px-3 py-2 rounded-lg hover:bg-green-900/80 text-sm"
                   >
-                    Kredileri Sıfırla
+                    Sıfırla
                   </button>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-4">
-                <span className="text-gray-300">
+              <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
+                <span className="text-gray-300 text-sm sm:text-base">
                   {MAX_FREE_CREDITS - parseInt(localStorage.getItem('freeCreditsUsed') || '0')} ücretsiz hak
                 </span>
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-6 py-2 
+                  className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-4 py-2 
                          rounded-lg font-semibold hover:from-indigo-600 hover:to-cyan-600 
-                         transition-all duration-200"
+                         transition-all duration-200 text-sm"
                 >
                   Giriş Yap
                 </button>
                 {process.env.NODE_ENV === 'development' && (
                   <button
                     onClick={resetFreeCredits}
-                    className="bg-yellow-900/60 text-yellow-300 px-4 py-2 rounded-lg hover:bg-yellow-900/80"
+                    className="bg-yellow-900/60 text-yellow-300 px-3 py-2 rounded-lg hover:bg-yellow-900/80 text-sm"
                   >
-                    Ücretsiz Hakları Sıfırla
+                    Sıfırla
                   </button>
                 )}
               </div>
@@ -252,21 +238,24 @@ function HomeContent() {
         </header>
 
         {/* Hero Section */}
-        <section className="w-full max-w-7xl flex flex-col md:flex-row items-center justify-between gap-10 py-16 md:py-24 px-4">
-          <div className="flex-1 flex flex-col gap-6 items-start">
-            <div className="flex items-center gap-2 bg-indigo-900/30 px-4 py-2 rounded-full">
-              <span className="animate-pulse-soft">✨</span>
-              <span className="text-sm text-indigo-300">AI Powered Coloring Pages</span>
+        <section className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-between gap-12 py-16 md:py-24 px-4">
+          <div className="flex-1 flex flex-col gap-8 items-start">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-indigo-900/30 to-cyan-900/30 px-4 py-2 rounded-full border border-indigo-500/30">
+              <span className="animate-pulse">✨</span>
+              <span className="text-sm text-indigo-300 font-medium">AI Powered Coloring Pages</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold">
-              Fotoğrafını <span className="gradient-text">Boyama Sayfasına</span> Dönüştür!
-            </h1>
-            <p className="text-lg text-gray-300">
-              Drawtica ile fotoğrafını yükle, yapay zeka ile <span className="font-semibold text-cyan-400">boyama sayfası</span> olarak indir.
-              İlk <span className="font-bold text-orange-400">3 hakkın ücretsiz!</span>
-            </p>
             
-            <div className="flex items-center gap-2 mt-2">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight">
+                Fotoğrafını <span className="gradient-text">Boyama Sayfasına</span> Dönüştür!
+              </h1>
+              <p className="text-lg md:text-xl text-gray-300 leading-relaxed max-w-2xl">
+                Drawtica ile fotoğrafını yükle, yapay zeka ile <span className="font-semibold text-cyan-400">boyama sayfası</span> olarak indir.
+                İlk <span className="font-bold text-orange-400">3 hakkın ücretsiz!</span>
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3 bg-[var(--card-background)] px-4 py-3 rounded-lg border border-indigo-900/50">
               <span className="text-sm text-gray-400">Kalan ücretsiz hakkın:</span>
               <span className={`text-lg font-bold px-3 py-1 rounded-full ${
                 user && typeof user.credits === "number" && user.credits > 0
@@ -277,42 +266,61 @@ function HomeContent() {
               </span>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4 items-start mt-6 w-full max-w-sm">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 
-                         file:text-sm file:font-semibold file:bg-indigo-900/80 file:text-indigo-200 
-                         hover:file:bg-indigo-800 w-full transition-all duration-200 
-                         bg-[var(--card-background)] rounded-lg text-gray-200 
-                         border border-indigo-900/50 focus:ring-2 focus:ring-indigo-500"
+            <div className="w-full max-w-md">
+              <FileUpload
+                onFileSelect={setFile}
+                loading={loading}
+                className="mb-4"
               />
+              
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={!file || loading}
                 className={`relative overflow-hidden bg-gradient-to-r from-indigo-500 to-cyan-500 
-                           text-white px-6 py-3 rounded-lg font-semibold w-full transition-all 
-                           duration-200 shadow-lg hover:shadow-indigo-500/25 
+                           text-white px-8 py-4 rounded-lg font-semibold w-full transition-all 
+                           duration-300 shadow-lg hover:shadow-indigo-500/25 
                            hover:from-indigo-600 hover:to-cyan-600 focus:ring-2 
-                           focus:ring-cyan-400 disabled:opacity-50 ${loading ? "animate-pulse" : ""}`}
+                           focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed
+                           transform hover:scale-105 active:scale-95 ${loading ? "animate-pulse" : ""}`}
               >
                 {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="loader border-2 border-t-2 border-white border-t-cyan-400 
-                                   rounded-full w-5 h-5 inline-block animate-spin"></span>
-                    Yükleniyor...
-                  </span>
+                  <LoadingSpinner size="sm" text="Oluşturuluyor..." />
                 ) : (
                   "Oluştur"
                 )}
               </button>
+              
               {message && (
-                <div className="text-center text-green-400 font-medium mt-2 animate-fade-in">
-                  {message}
+                <div className="mt-4">
+                  {message.includes('başarıyla') || message.includes('successfully') ? (
+                    <SuccessMessage message={message} />
+                  ) : (
+                    <ErrorMessage message={message} type="error" />
+                  )}
                 </div>
               )}
-            </form>
+            </div>
+          </div>
+          
+          {/* Hero Image/Illustration */}
+          <div className="flex-1 flex justify-center lg:justify-end">
+            <div className="relative w-full max-w-md lg:max-w-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 rounded-3xl blur-3xl"></div>
+              <div className="relative bg-[var(--card-background)] rounded-3xl p-8 border border-indigo-900/50 shadow-2xl">
+                <div className="text-center space-y-4">
+                  <div className="text-6xl mb-4">🎨</div>
+                  <h3 className="text-xl font-bold text-white">AI Boyama Sayfası</h3>
+                  <p className="text-gray-400 text-sm">
+                    Fotoğrafınızı yükleyin, AI ile boyama sayfasına dönüştürün
+                  </p>
+                  <div className="flex justify-center space-x-2">
+                    <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse"></div>
+                    <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                    <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
