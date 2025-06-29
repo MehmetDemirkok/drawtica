@@ -55,7 +55,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
           setError(data.error || 'Şifre sıfırlama başarısız');
         }
       }
-    } catch (err) {
+    } catch (_) {
       setError('Bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
     } finally {
       setLoading(false);
