@@ -74,16 +74,20 @@ function HomeContent() {
     e.preventDefault();
     if (!file) return;
 
-    // Kullanıcı giriş yapmamışsa
+    // Kullanıcı giriş yapmamışsa ve ücretsiz hakları bittiyse
     if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-
-    // Kredisi yoksa
-    if (user.credits <= 0) {
-      setShowPricingModal(true);
-      return;
+      // Ücretsiz hakları kontrol et (localStorage'da sakla)
+      const freeCreditsUsed = parseInt(localStorage.getItem('freeCreditsUsed') || '0');
+      if (freeCreditsUsed >= MAX_FREE_CREDITS) {
+        setShowAuthModal(true);
+        return;
+      }
+    } else {
+      // Giriş yapmış kullanıcının kredisi yoksa
+      if (user.credits <= 0) {
+        setShowPricingModal(true);
+        return;
+      }
     }
 
     setPdfBase64(null);
@@ -112,12 +116,19 @@ function HomeContent() {
           setMessage("PDF başarıyla oluşturuldu!");
           setPdfBase64(data.pdfBase64);
           setImageBase64(data.imageBase64 || null);
+          
+          // Kredi kullanımını güncelle
           if (user && typeof user.credits === "number") {
             updateUser({
               ...user,
               credits: user.credits - 1,
             });
+          } else {
+            // Ücretsiz hakları kullan
+            const freeCreditsUsed = parseInt(localStorage.getItem('freeCreditsUsed') || '0');
+            localStorage.setItem('freeCreditsUsed', (freeCreditsUsed + 1).toString());
           }
+          
           setShowResultModal(true);
         } else {
           setMessage(data.error || "Bir hata oluştu. Lütfen tekrar deneyin.");
@@ -166,9 +177,13 @@ function HomeContent() {
     alert("Ödeme sistemi entegrasyonu yakında!");
   };
 
+  const resetFreeCredits = () => {
+    localStorage.removeItem('freeCreditsUsed');
+    setMessage("Ücretsiz haklar sıfırlandı!");
+  };
+
   return (
     <>
-      <AuthModal isOpen={true} onClose={() => {}} />
       <div className="min-h-screen w-full bg-[var(--background)] text-white flex flex-col items-center px-2">
         {/* Header */}
         <header className="w-full max-w-7xl flex items-center justify-between py-6 px-4">
@@ -211,14 +226,27 @@ function HomeContent() {
                 )}
               </div>
             ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-6 py-2 
+              <div className="flex items-center gap-4">
+                <span className="text-gray-300">
+                  {MAX_FREE_CREDITS - parseInt(localStorage.getItem('freeCreditsUsed') || '0')} ücretsiz hak
+                </span>
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-gradient-to-r from-indigo-500 to-cyan-500 text-white px-6 py-2 
                          rounded-lg font-semibold hover:from-indigo-600 hover:to-cyan-600 
                          transition-all duration-200"
-              >
-                Giriş Yap
-              </button>
+                >
+                  Giriş Yap
+                </button>
+                {process.env.NODE_ENV === 'development' && (
+                  <button
+                    onClick={resetFreeCredits}
+                    className="bg-yellow-900/60 text-yellow-300 px-4 py-2 rounded-lg hover:bg-yellow-900/80"
+                  >
+                    Ücretsiz Hakları Sıfırla
+                  </button>
+                )}
+              </div>
             )}
           </nav>
         </header>
@@ -241,11 +269,11 @@ function HomeContent() {
             <div className="flex items-center gap-2 mt-2">
               <span className="text-sm text-gray-400">Kalan ücretsiz hakkın:</span>
               <span className={`text-lg font-bold px-3 py-1 rounded-full ${
-                typeof user?.credits === "number" && user.credits > 0
+                user && typeof user.credits === "number" && user.credits > 0
                   ? "bg-green-900/60 text-green-300"
                   : "bg-red-900/60 text-red-300"
               }`}>
-                {typeof user?.credits === "number" ? user.credits : 0} / {MAX_FREE_CREDITS}
+                {user && typeof user.credits === "number" ? user.credits : MAX_FREE_CREDITS} / {MAX_FREE_CREDITS}
               </span>
             </div>
 
@@ -545,7 +573,7 @@ function HomeContent() {
               Sunucularımızda kalıcı olarak saklanmaz. Tüm işlemler güvenli bağlantı üzerinden gerçekleşir.
             </p>
             <div className="mt-8 p-4 bg-indigo-900/30 rounded-xl">
-              <h4 className="font-semibold text-indigo-200 mb-2">�� Güvenlik Garantisi</h4>
+              <h4 className="font-semibold text-indigo-200 mb-2">Güvenlik Garantisi</h4>
               <p className="text-gray-400">
                 Tüm verileriniz SSL şifrelemesi ile korunur ve işlem sonrası otomatik olarak silinir.
               </p>
